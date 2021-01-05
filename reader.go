@@ -155,7 +155,7 @@ func (r *reader) Header() (Header, error) {
 	for line != "" {
 		if key, value := splitLine(line, ":"); key != "" {
 			key = strings.ToLower(key) // normalize to lowercase
-			header[key] = value
+			header.Set(key, value)
 		}
 		line, err = r.ReadLine()
 		if err != nil {
