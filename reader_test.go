@@ -12,7 +12,7 @@ import (
 )
 
 func TestRead(t *testing.T) {
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	reader, err := New(fd)
 	require.Nil(t, err)
@@ -37,7 +37,7 @@ func testNext(t *testing.T, reader Reader) {
 
 func TestNext(t *testing.T) {
 	// Default (Source) and GZIP
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	reader, err := New(fd)
 	require.Nil(t, err)
@@ -48,7 +48,7 @@ func TestNext(t *testing.T) {
 	fd.Close()
 
 	// Copy and BZIP2
-	fd, err = os.Open("./test/hello.warc.bz2")
+	fd, err = os.Open("./testdata/hello.warc.bz2")
 	require.Nil(t, err)
 	reader, err = New(fd)
 	require.Nil(t, err)
@@ -58,7 +58,7 @@ func TestNext(t *testing.T) {
 }
 
 func TestSeek(t *testing.T) {
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	reader, err := New(fd)
 	require.Nil(t, err)
@@ -69,7 +69,7 @@ func TestSeek(t *testing.T) {
 }
 
 func TestReadLine(t *testing.T) {
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	reader, err := New(fd)
 	require.Nil(t, err)
@@ -86,7 +86,7 @@ func TestHeader(t *testing.T) {
 		"warc-block-digest": "sha1:0abcd9a9d15f8fa64d19c17fdc752fcc08671fc5",
 		"content-length":    "2054",
 	}
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	decompressed, err := decompress(fd)
 	require.Nil(t, err)
@@ -96,8 +96,9 @@ func TestHeader(t *testing.T) {
 		Record: nil,
 	}
 	require.Nil(t, err)
-	actual, err := reader.Header()
+	actual, n, err := reader.Header()
 	require.Nil(t, err)
+	require.NotZero(t, n)
 	for key, expectedValue := range expected {
 		require.True(t, actual.Has(key))
 		actualValue := actual.Get(key)
@@ -106,7 +107,7 @@ func TestHeader(t *testing.T) {
 }
 
 func TestContent(t *testing.T) {
-	fd, err := os.Open("./test/hello.warc.gz")
+	fd, err := os.Open("./testdata/hello.warc.gz")
 	require.Nil(t, err)
 	decompressed, err := decompress(fd)
 	require.Nil(t, err)
@@ -116,8 +117,9 @@ func TestContent(t *testing.T) {
 		Record: nil,
 	}
 	require.Nil(t, err)
-	hdr, err := reader.Header()
+	hdr, n, err := reader.Header()
 	require.Nil(t, err)
+	require.NotZero(t, n)
 	expected := [20]byte{
 		0x0a, 0xbc, 0xd9, 0xa9, 0xd1, 0x5f, 0x8f, 0xa6,
 		0x4d, 0x19, 0xc1, 0x7f, 0xdc, 0x75, 0x2f, 0xcc,

@@ -18,11 +18,11 @@ func testCompressionType(t *testing.T, compressed []byte, expected CompressionTy
 
 func TestCompressionType(t *testing.T) {
 	// test for gzip
-	gzipContents, err := ioutil.ReadFile("./test/hello.txt.gz")
+	gzipContents, err := ioutil.ReadFile("./testdata/hello.txt.gz")
 	require.Nil(t, err)
 	testCompressionType(t, gzipContents, GzipCompression)
 	// test for bzip2
-	bzipContents, err := ioutil.ReadFile("./test/hello.txt.bz2")
+	bzipContents, err := ioutil.ReadFile("./testdata/hello.txt.bz2")
 	require.Nil(t, err)
 	testCompressionType(t, bzipContents, BzipCompression)
 }
@@ -39,11 +39,11 @@ func testDecompress(t *testing.T, compressed, expected []byte) {
 func TestDecompress(t *testing.T) {
 	expected := []byte("Hello World")
 	// test for gzip
-	gzipContents, err := ioutil.ReadFile("./test/hello.txt.gz")
+	gzipContents, err := ioutil.ReadFile("./testdata/hello.txt.gz")
 	require.Nil(t, err)
 	testDecompress(t, gzipContents, expected)
 	// test for bzip2
-	bzipContents, err := ioutil.ReadFile("./test/hello.txt.bz2")
+	bzipContents, err := ioutil.ReadFile("./testdata/hello.txt.bz2")
 	require.Nil(t, err)
 	testDecompress(t, bzipContents, expected)
 }

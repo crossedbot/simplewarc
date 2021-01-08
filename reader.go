@@ -17,6 +17,7 @@ const (
 type Record struct {
 	Header  Header
 	Content io.Reader
+	Offset  int // Offset in archive where record starts (in bytes)
 }
 
 // Reader represents a WARC archive reader
@@ -42,6 +43,7 @@ type reader struct {
 	Source io.ReadCloser // Decompressed source reader
 	Reader *bufio.Reader // Reader used for reading by mode
 	Record *Record       // The current record being tracked
+	Offset int           // Current location in archive (in bytes)
 }
 
 // New wraps the given reader and returns a new WARC reader
@@ -81,18 +83,23 @@ func (r *reader) Next() (*Record, error) {
 		return nil, err
 	}
 	// skip version line
-	if _, err := r.ReadLine(); err != nil {
-		return nil, err
-	}
-	// build the header
-	header, err := r.Header()
+	version, err := r.ReadLine()
 	if err != nil {
 		return nil, err
 	}
+	sz := len(version) + 1 // + newline
+	// build the header
+	header, hdrSz, err := r.Header()
+	if err != nil {
+		return nil, err
+	}
+	sz += hdrSz + 2 // + newline + empty line
 	// parse the contents based on the content-length header
 	content := r.Content(header.ContentLength())
-	r.Record = &Record{Header: header, Content: content}
-	return r.Record, nil
+	r.Record = &Record{Header: header, Content: content, Offset: r.Offset}
+	r.Offset += sz + int(header.ContentLength()) +
+		1 + RecordDelimitingLineCount // + newline + empty lines
+	return r.Record, err
 }
 
 // Seek sets the reader to the next record in the archive
@@ -145,24 +152,26 @@ func (r *reader) ReadLine() (string, error) {
 	return str, nil
 }
 
-// Header returns the header of the current WARC record
-func (r *reader) Header() (Header, error) {
+// Header returns the header of the current WARC record and its length
+func (r *reader) Header() (Header, int, error) {
 	header := make(Header)
+	n := 0
 	line, err := r.ReadLine()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	for line != "" {
+		n += len(line) + 1
 		if key, value := splitLine(line, ":"); key != "" {
 			key = strings.ToLower(key) // normalize to lowercase
 			header.Set(key, value)
 		}
 		line, err = r.ReadLine()
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
-	return header, nil
+	return header, n - 1, nil
 }
 
 // Content returns the content of the current WARC record
