@@ -99,7 +99,7 @@ func (r *reader) Next() (*Record, error) {
 	r.Record = &Record{Header: header, Content: content, Offset: r.Offset}
 	r.Offset += sz + int(header.ContentLength()) +
 		1 + RecordDelimitingLineCount // + newline + empty lines
-	return r.Record, err
+	return r.Record, nil
 }
 
 // Seek sets the reader to the next record in the archive
